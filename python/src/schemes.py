@@ -8,6 +8,8 @@ By convention:
 `seed` refers to any value.
 `coalg` refers to a co-algebra that returns `data` when processing any value.
 """
+from dataclasses import dataclass
+from util import CoFree, Free, Pure, Insert
 
 
 # Folds
@@ -29,13 +31,21 @@ def para(alg):
     return run
 
 
+def prothesi(alg):
+    """
+    Extending an catamorphism by exposing the future path.
+    """
+    def run(data, todo=()):
+        return alg(data.map(lambda x: run(x, (data,) + todo)), todo)
+    return run
+
+
 def histo(alg):
     """
-    Extending a catamorphism by exposing multiple steps of processing.
+    Extending a catamorphism by exposing the processed tree.
     """
-    def run(data, history=()):
-        new = alg(data, *history)
-        return data.map(lambda dat: run(dat, (new,) + history))
+    def run(data):
+        return cata(lambda x: CoFree(alg(x), x))(data).a
     return run
 
 
@@ -80,23 +90,40 @@ def option_apo(coalg):
     return run
 
 
-class Insert:
+def ichno(coalg):
     """
-    A utility for taking multiple steps in a futumorphism.
+    Dual to prothesi, extending an anamorphism by exposing the current trace.
     """
-    def __init__(self, v): self.ins = v
+    def run(data, trace=()):
+        new = coalg(data, trace)
+        return new.map(lambda x: run(x, (new,) + trace))
+    return run
 
 
 def futu(coalg):
+    """
+    Unfolding like an anamorphism, but with multiple steps at a time with the use of a tree.
+    The co-algebra skips the bulk of the `Free` tree, only starting again at the `Pure` leaves.
+    """
+    def traverse_free(free):
+        if isinstance(free, Pure): return free.a.map(run)
+        elif isinstance(free, Free): return free.fa.map(traverse_free)
+
+    def run(seed):
+        return traverse_free(coalg(seed))
+    return run
+
+
+def insert_futu(coalg):
     """
     Unfolding like an anamorphism, but with multiple steps at a time with the use of Insert.
     The co-algebra is not run on elements wrapped in Insert.
     """
     def traverse_insert(fa):
-        return fa.v.map(traverse_insert) if isinstance(fa, Insert) else run(fa)
+        return fa.v.map(traverse_insert) if isinstance(fa, Insert) else fa.v.map(run)
 
     def run(seed):
-        return coalg(seed).map(traverse_insert)
+        return traverse_insert(coalg(seed))
     return run
 
 
