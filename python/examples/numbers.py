@@ -1,8 +1,7 @@
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 
 from util import AutoFunctor
-from schemes import ana, cata, histo
+from schemes import *
 
 
 # Structures
@@ -17,19 +16,19 @@ class Z(Peano):
 
 @dataclass
 class S(Peano):
-    prev: Peano
+    pred: Peano
 
 
 # Algebras
 def to_int_alg(fa):
     if isinstance(fa, Z): return 0
-    elif isinstance(fa, S): return fa.prev + 1
+    elif isinstance(fa, S): return fa.pred + 1
 
 
 def fib_alg(fh):
     if isinstance(fh, Z): return 1
-    elif isinstance(fh.prev.fa, Z): return 1
-    else: return fh.prev.a + fh.prev.fa.prev.a
+    elif isinstance(fh.pred.fa, Z): return 1
+    else: return fh.pred.a + fh.pred.fa.pred.a
 
 
 def from_int_coalg(seed):

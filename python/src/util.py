@@ -2,7 +2,6 @@
 Provides basic utilities for dealing with recursion schemes in Python.
 """
 from dataclasses import dataclass, fields, replace
-from typing import Any
 
 
 @dataclass
@@ -38,9 +37,9 @@ class AutoFunctor(type):
     """
     This slapdash metaclass provides a mapping function for child classes.
     Specifically, the `map` method takes a function and applies it to all fields with type annotations recursive to the parent class.
-    Only works on dataclasses.
+    Only works on dataclasses and does not overwrite existing `map` methods.
     """
-    def __init__(cls, name, bases, dct):
+    def __init__(cls, name, bases, d):
         if bases and not hasattr(cls, "map"):
             cls.map = lambda self, func: replace(self, **{
                 field.name: func(getattr(self, field.name))
@@ -48,4 +47,4 @@ class AutoFunctor(type):
                 if field.type is bases[0]
             })
 
-        super().__init__(name, bases, dct)
+        super().__init__(name, bases, d)

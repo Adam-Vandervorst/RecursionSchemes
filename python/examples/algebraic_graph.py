@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from util import AutoFunctor
-from schemes import cata, hylo, para, apo
+from schemes import *
 
 
 # Structures
@@ -60,24 +60,21 @@ def vertexset_alg(fa):
     elif isinstance(fa, Connect): return fa.x | fa.y
 
 
-def simplify_alg(fa, ofa):
-    if isinstance(fa, Empty): return Empty()
-    elif isinstance(fa, Vertex): return {fa.data}
-    elif isinstance(fa, Overlay): return fa.x | fa.y
-    elif isinstance(fa, Connect): return fa.x | fa.y
+def simplify_alg(fa):
+    ...
 
 
 # Usage
 def run():
     g = Vertex('x')*(Vertex('y') + Vertex('z'))
     print(cata(size_alg)(g))
-    print(cata(node_map(lambda x: x.data*2))(g))
 
-    def graph_induce(p):
-        return node_map(lambda x: x if p(x) else Empty())
+    values = {'x': 1, 'y': 2, 'z': 3}
+    ig = cata(node_map(lambda x: Vertex(values[x.data])))(g)
+    print(sum(cata(vertexset_alg)(ig)))
 
+    def graph_induce(p): return node_map(lambda x: x if p(x) else Empty())
     print(cata(graph_induce(lambda v: v.data != 'x'))(g))
-    print(cata(vertexset_alg)(g))
 
 
 if __name__ == '__main__':

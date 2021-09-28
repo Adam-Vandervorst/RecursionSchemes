@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from typing import Any
 
 from util import AutoFunctor
-from schemes import cata, hylo, para, apo
+from schemes import *
 
 
 # Structures
@@ -58,9 +57,9 @@ def string_alg(fa):
     elif isinstance(fa, Prod): return f'({fa.x}*{fa.y})'
 
 
-def eval_in(x):
+def eval_in(value):
     def eval_alg(fa):
-        if isinstance(fa, Var): return x
+        if isinstance(fa, Var): return value
         elif isinstance(fa, Zero): return 0
         elif isinstance(fa, One): return 1
         elif isinstance(fa, Neg): return -fa.x

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from util import AutoFunctor
-from schemes import cata, hylo, para, apo
+from schemes import *
 
 
 # Structures
@@ -33,12 +33,12 @@ def string_alg(fa):
     elif isinstance(fa, Empty): return "."
 
 
-def mergesort_coalg(seed):
-    if not seed: return Empty()
-    elif len(seed) == 1: return Leaf(seed[0])
+def mergesort_coalg(a):
+    if not a: return Empty()
+    elif len(a) == 1: return Leaf(a[0])
     else:
-        middle = len(seed)//2
-        return Branch(seed[:middle], seed[middle:])
+        middle = len(a)//2
+        return Branch(a[:middle], a[middle:])
 
 
 def merge(l, r):

@@ -1,7 +1,5 @@
 from dataclasses import dataclass, field
 from typing import Any
-from functools import reduce
-from operator import or_
 
 from util import AutoFunctor
 from schemes import *
