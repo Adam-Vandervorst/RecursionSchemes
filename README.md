@@ -1,7 +1,7 @@
 # RecursionSchemes
 This repository contains practical code examples in multiple languages for learning about recursion schemes.
 
-Just dive into the directory named after your favorite language; `src/schemes` contains the implementation of different recursion schemes while `examples/<example>` applies them to some toy problem. 
+Just dive into the directory named after your favorite language; `lib/schemes` contains the implementation of different recursion schemes while `examples/<example>` applies them to some toy problem. 
 
 There is no guarantee of correctness, and I had to make some interpretations to port them to Python, C++, and JavaScript. Nonetheless, I hope the short and naive implementation, as well as the examples, can help you in your journey.
 
