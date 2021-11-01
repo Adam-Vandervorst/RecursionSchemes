@@ -1,9 +1,10 @@
-enum Expr:
-  case Const(value: Double)
-  case Var(name: String)
-  case Exp(x: Expr)
-  case Plus(x: Expr, y: Expr)
-  case Times(x: Expr, y: Expr)
+enum ExprF[A]:
+  case ConstF(value: Double)
+  case VarF(name: String)
+  case ExpF(x: A)
+  case PlusF(x: A, y: A)
+  case TimesF(x: A, y: A)
+import ExprF.*
 
 given Functor[ExprF] with
   extension [A](e: ExprF[A])
