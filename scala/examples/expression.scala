@@ -1,73 +1,73 @@
-enum ExprF[A]:
-  case ConstF(value: Double)
-  case VarF(name: String)
-  case ExpF(x: A)
-  case PlusF(x: A, y: A)
-  case TimesF(x: A, y: A)
-import ExprF.*
+enum Expr[A]:
+  case Const(value: Double)
+  case Var(name: String)
+  case Exp(x: A)
+  case Plus(x: A, y: A)
+  case Times(x: A, y: A)
+import Expr.*
 
-given Functor[ExprF] with
-  extension [A](e: ExprF[A])
-    def map[B](f: A => B): ExprF[B] = e match
-      case ConstF(v) => ConstF(v)
-      case VarF(n) => VarF(n)
-      case ExpF(x, y) => ExpF(f(x))
-      case PlusF(x, y) => PlusF(f(x), f(y))
-      case TimesF(x, y) => TimesF(f(x), f(y))
+given Functor[Expr] with
+  extension [A](e: Expr[A])
+    def map[B](f: A => B): Expr[B] = e match
+      case Const(v) => Const(v)
+      case Var(n) => Var(n)
+      case Exp(x, y) => Exp(f(x))
+      case Plus(x, y) => Plus(f(x), f(y))
+      case Times(x, y) => Times(f(x), f(y))
 
-def str_expr = cata[ExprF, String]{
-  case ConstF(v) => v.toString
-  case VarF(name) => name
-  case ExpF(x) => s"exp($x)"
-  case PlusF(x, y) => s"($x + $y)"
-  case TimesF(x, y) => s"($x * $y)"
+def str_expr = cata[Expr, String]{
+  case Const(v) => v.toString
+  case Var(name) => name
+  case Exp(x) => s"exp($x)"
+  case Plus(x, y) => s"($x + $y)"
+  case Times(x, y) => s"($x * $y)"
 }
 
-def diff = para[ExprF, ExprF]((fa, o) => fa match
-  case ConstF(v) => ConstF(0)
-  case VarF(n) => ConstF(1)
-  case ExpF(x) => TimesF(x, ExpF(o.x))
-  case PlusF(x, y) => PlusF(x, y)
-  case TimesF(x, y) => PlusF(Times(o.x, y), Times(x, o.y))
+def diff = para[Expr, Expr]((fa, o) => fa match
+  case Const(v) => Const(0)
+  case Var(n) => Const(1)
+  case Exp(x) => Times(x, Exp(o.x))
+  case Plus(x, y) => Plus(x, y)
+  case Times(x, y) => Plus(Times(o.x, y), Times(x, o.y))
 )
 
-def eval(values: Map[String, Double]): ExprF[Double] => Double = {
-  case ConstF(v) => v
-  case VarF(n) => values(n)
-  case ExpF(x) => Math.exp(x)
-  case PlusF(x, y) => x + y
-  case TimesF(x, y) => x * y
+def eval(values: Map[String, Double]): Expr[Double] => Double = {
+  case Const(v) => v
+  case Var(n) => values(n)
+  case Exp(x) => Math.exp(x)
+  case Plus(x, y) => x + y
+  case Times(x, y) => x * y
 }
 
-def graphviz_expr = para[ExprF, String]{
-  case ConstF(v) => v.toString
-  case VarF(name) => name
-  case ExpF((x, _)) => s"exp($x)"
-  case PlusF((x, _), (y, _)) => s"($x + $y)"
-  case TimesF((x, _), (y, _)) => s"($x * $y)"
+def graphviz_expr = para[Expr, String]{
+  case Const(v) => v.toString
+  case Var(name) => name
+  case Exp((x, _)) => s"exp($x)"
+  case Plus((x, _), (y, _)) => s"($x + $y)"
+  case Times((x, _), (y, _)) => s"($x * $y)"
 }
 
 extension (x: Object)
   def strHash = java.lang.Integer.toString(x.hashCode, 36).replace("-", "m")
 
-def id_alg: ExprF[String] => String = {
-  case ConstF(v) => "Const_" + v.toString.replace("-", "M").replace(".", "D")
-  case VarF(name) => "Var_" + name
-  case ExpF(x) => s"Exp_${x.strHash}"
-  case PlusF(x, y) => s"Plus_${(x + "_" + y).strHash}"
-  case TimesF(x, y) => s"Times_${(x + "_" + y).strHash}"
+def id_alg: Expr[String] => String = {
+  case Const(v) => "Const_" + v.toString.replace("-", "M").replace(".", "D")
+  case Var(name) => "Var_" + name
+  case Exp(x) => s"Exp_${x.strHash}"
+  case Plus(x, y) => s"Plus_${(x + "_" + y).strHash}"
+  case Times(x, y) => s"Times_${(x + "_" + y).strHash}"
 }
 
-def draw(ends: Boolean, step_1: Boolean) = weak_zygo[ExprF, List[String], String](id_alg, (fa, id) => fa match {
-    case ConstF(v) => List(s"$id [label=\"${v}\"${if ends then " color=red" else ""}]")
-    case VarF(name) => List(s"$id [label=\"${name}\"${if ends then " color=red" else ""}]")
-    case ExpF((xl, xid)) => xl ++ List(
+def draw(ends: Boolean, step_1: Boolean) = weak_zygo[Expr, List[String], String](id_alg, (fa, id) => fa match {
+    case Const(v) => List(s"$id [label=\"${v}\"${if ends then " color=red" else ""}]")
+    case Var(name) => List(s"$id [label=\"${name}\"${if ends then " color=red" else ""}]")
+    case Exp((xl, xid)) => xl ++ List(
       s"$id [label=\"Exp\"${if step_1 && xl.length == 1 then " color=red" else ""}]",
       s"$xid -> $id")
-    case PlusF((xl, xid), (yl, yid)) => xl ++ yl ++ List(
+    case Plus((xl, xid), (yl, yid)) => xl ++ yl ++ List(
       s"$id [label=\"Plus\"${if step_1 && Math.max(xl.length, yl.length) == 1 then " color=red" else ""}]",
       s"$xid -> $id", s"$yid -> $id")
-    case TimesF((xl, xid), (yl, yid)) => xl ++ yl ++ List(
+    case Times((xl, xid), (yl, yid)) => xl ++ yl ++ List(
       s"$id [label=\"Times\"${if step_1 && Math.max(xl.length, yl.length) == 1 then " color=red" else ""}]",
       s"$xid -> $id", s"$yid -> $id")
 })
@@ -80,10 +80,10 @@ val exp_like = (raw"(?:exp|e\^)" + bracketed).r
 val plus_like = capture_binop(raw"\+")
 val times_like = capture_binop(raw"\*")
 
-def parse = ana[ExprF, String]{
-  case plus_like(l, r) => PlusF(l, r)
-  case times_like(l, r) => TimesF(l, r)
-  case exp_like(e) => ExpF(e)
-  case const_like(v) => ConstF(v.toDouble)
-  case var_like(name) => VarF(name)
+def parse = ana[Expr, String]{
+  case plus_like(l, r) => Plus(l, r)
+  case times_like(l, r) => Times(l, r)
+  case exp_like(e) => Exp(e)
+  case const_like(v) => Const(v.toDouble)
+  case var_like(name) => Var(name)
 }
