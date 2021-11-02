@@ -58,7 +58,7 @@ def id_alg: Expr[String] => String = {
   case Times(x, y) => s"Times_${(x + "_" + y).strHash}"
 }
 
-def draw(ends: Boolean, step_1: Boolean) = weak_zygo[Expr, List[String], String](id_alg, (fa, id) => fa match {
+def draw(ends: Boolean, step_1: Boolean) = pre_zygo[Expr, List[String], String](id_alg, (fa, id) => fa match {
     case Const(v) => List(s"$id [label=\"${v}\"${if ends then " color=red" else ""}]")
     case Var(name) => List(s"$id [label=\"${name}\"${if ends then " color=red" else ""}]")
     case Exp((xl, xid)) => xl ++ List(

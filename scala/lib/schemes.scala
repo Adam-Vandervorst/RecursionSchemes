@@ -1,3 +1,5 @@
+package lib
+
 def cata[F[_] : Functor, A](alg: F[A] => A)(fix: Fix[F]): A =
   alg(fix.unFix.map(cata(alg)))
 
@@ -13,8 +15,8 @@ def bicata[F[_] : Functor, A, B](f: (F[A], F[B]) => A, g: (F[A], F[B]) => B)(fix
   val fb = r.map(_._2)
   (f(fa, fb), g(fa, fb))
 
-def weak_zygo[F[_] : Functor, A, B](helper: F[B] => B, alg: (F[(A, B)], B) => A)(fix: Fix[F]): (A, B) =
-  val r = fix.unFix.map(weak_zygo(helper, alg))
+def pre_zygo[F[_] : Functor, A, B](helper: F[B] => B, alg: (F[(A, B)], B) => A)(fix: Fix[F]): (A, B) =
+  val r = fix.unFix.map(pre_zygo(helper, alg))
   val b = helper(r.map(_._2))
   (alg(r, b), b)
 
