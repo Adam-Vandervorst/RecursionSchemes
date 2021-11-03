@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from util import AutoFunctor
+from core import AutoFunctor
 from schemes import *
 
 

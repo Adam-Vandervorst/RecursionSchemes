@@ -10,17 +10,17 @@ class CoFree:
     fa: 'F[CoFree[F, A]]'
 
 
-class FreeT:
+class Free:
     pass
 
 
 @dataclass
-class Pure(FreeT):
+class Pure(Free):
     a: 'A'
 
 
 @dataclass
-class Free(FreeT):
+class Bind(Free):
     fa: 'F[Free[F, A]]'
 
 

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from util import AutoFunctor
+from core import AutoFunctor
 from schemes import *
 
 

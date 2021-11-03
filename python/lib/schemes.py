@@ -106,7 +106,7 @@ def futu(coalg):
     """
     def traverse_free(free):
         if isinstance(free, Pure): return free.a.map(run)
-        elif isinstance(free, Free): return free.fa.map(traverse_free)
+        elif isinstance(free, Bind): return free.fa.map(traverse_free)
 
     def run(a):
         return traverse_free(coalg(a))

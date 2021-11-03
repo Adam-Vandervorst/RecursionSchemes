@@ -25,9 +25,9 @@ def vertexSet[V] = cata[[X] =>> Graph[V, X], Set[V]]{
 }
 
 def fromAdj[K, V] = futu[[X] =>> Graph[V, X], Iterable[(V, Set[V])]]{
-  case (v, nbs)::tail => Overlay(Free.Pure(tail),
-    Free.Bind(Connect(Free.Bind(Vertex(v)),
-              nbs.map(k => Free.Bind(Vertex(k))).fold(Free.Bind(Empty))((x, y) => Free.Bind(Overlay(x, y))))))
+  case (v, nbs)::tail => Overlay(Free.Pure(tail), Free.Bind(
+    Connect(Free.Bind(Vertex(v)),
+            nbs.foldLeft(Free.Bind(Empty))((t, k) => Free.Bind(Overlay(t, Free.Bind(Vertex(k))))))))
   case Nil => Empty
 }
 
@@ -49,3 +49,21 @@ def pretty[V] = prothesi[[X] =>> Graph[V, X], String]((fa, todo) => fa match
     case Fix(Connect(_, _))::_ => s"$x -> $y"
     case _ => s"($x -> $y)"
 )
+
+def path[V] = futu[[X] =>> Graph[V, X], Iterable[V]]{
+  case x::y::Nil => Connect(Free.Bind(Vertex(x)), Free.Bind(Vertex(y)))
+  case x::y::tail => Overlay(Free.Pure(x::y::Nil), Free.Pure(y::tail))
+  case _ => Empty
+}
+
+def tree[V] = futu[[X] =>> Graph[V, X], Tree[V]]{
+  case Fix((v, Nil)) => Vertex(v)
+  case Fix((v, xs)) =>
+    val leaves = xs.collect[Free[[X] =>> Graph[V, X], Tree[V]]]{case Fix((s, _)) => Free.Bind(Vertex(s))}
+    val branches = xs.collect[Free[[X] =>> Graph[V, X], Tree[V]]]{case x @ Fix((_, cs)) if cs.nonEmpty => Free.Pure(x)}
+    val level = Connect(Free.Bind(Vertex(v)),
+                        leaves.tail.foldLeft(leaves.head)((t, x) => Free.Bind(Overlay(t, x))))
+    if branches.isEmpty then level
+    else Overlay(Free.Bind(level),
+                 branches.tail.foldRight(branches.head)((x, t) => Free.Bind(Overlay(t, x))))
+}
