@@ -1,5 +1,6 @@
 .idea
 scala/target
 scala/project/target
+scala/project/project
 scala/.idea
 scala/.bsp
