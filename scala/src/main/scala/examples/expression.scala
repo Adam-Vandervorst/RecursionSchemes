@@ -1,3 +1,7 @@
+package examples.expression
+
+import lib._
+
 enum Expr[A]:
   case Const(value: Double)
   case Var(name: String)
@@ -11,7 +15,7 @@ given Functor[Expr] with
     def map[B](f: A => B): Expr[B] = e match
       case Const(v) => Const(v)
       case Var(n) => Var(n)
-      case Exp(x, y) => Exp(f(x))
+      case Exp(x) => Exp(f(x))
       case Plus(x, y) => Plus(f(x), f(y))
       case Times(x, y) => Times(f(x), f(y))
 
@@ -23,13 +27,13 @@ def str_expr = cata[Expr, String]{
   case Times(x, y) => s"($x * $y)"
 }
 
-def diff = para[Expr, Expr]((fa, o) => fa match
-  case Const(v) => Const(0)
-  case Var(n) => Const(1)
-  case Exp(x) => Times(x, Exp(o.x))
-  case Plus(x, y) => Plus(x, y)
-  case Times(x, y) => Plus(Times(o.x, y), Times(x, o.y))
-)
+def diff = para[Expr, Expr[Fix[Expr]]]{
+  case Const(_) => Const(0)
+  case Var(_) => Const(1)
+  case Exp((x, o)) => Times(Fix(x), o)
+  case Plus((x, _), (y, _)) => Plus(Fix(x), Fix(y))
+  case Times((x, ox), (y, oy)) => Plus(Fix(Times(ox, Fix(y))), Fix(Times(oy, Fix(y))))
+}
 
 def eval(values: Map[String, Double]): Expr[Double] => Double = {
   case Const(v) => v

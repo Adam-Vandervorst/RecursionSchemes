@@ -1,1 +1,5 @@
 .idea
+scala/target
+scala/project/target
+scala/.idea
+scala/.bsp
