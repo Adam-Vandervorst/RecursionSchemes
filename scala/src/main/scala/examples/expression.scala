@@ -1,6 +1,8 @@
 package examples.expression
 
-import lib._
+import lib.*
+
+import scala.annotation.tailrec
 
 enum Expr[A]:
   case Const(value: Double)
@@ -19,23 +21,28 @@ given Functor[Expr] with
       case Plus(x, y) => Plus(f(x), f(y))
       case Times(x, y) => Times(f(x), f(y))
 
-def str_expr = cata[Expr, String]{
+def pretty = para[Expr, String]{
   case Const(v) => v.toString
   case Var(name) => name
-  case Exp(x) => s"exp($x)"
-  case Plus(x, y) => s"($x + $y)"
-  case Times(x, y) => s"($x * $y)"
+  case Exp((x, Fix(_: Var[_]))) => s"e^$x"
+  case Exp((x, _)) => s"exp($x)"
+  case Times((x, Fix(_: Plus[_])), (y, Fix(_: Plus[_]))) => s"($x)*($y)"
+  case Times((x, _), (y, Fix(_: Plus[_]))) => s"$x*($y)"
+  case Times((x, Fix(_: Plus[_])), (y, _)) => s"($x)*$y"
+  case Times((x, _), (y, _)) => s"$x*$y"
+  case Plus((x, _), (y, _)) => s"$x + $y"
 }
 
-def diff = para[Expr, Expr[Fix[Expr]]]{
+def diff(to: String) = para[Expr, Expr[Fix[Expr]]]{
   case Const(_) => Const(0)
-  case Var(_) => Const(1)
-  case Exp((x, o)) => Times(Fix(x), o)
+  case Var(`to`) => Const(1)
+  case Var(_) => Const(0)
+  case Exp((x, o)) => Times(Fix(x), Fix(Exp(o)))
   case Plus((x, _), (y, _)) => Plus(Fix(x), Fix(y))
-  case Times((x, ox), (y, oy)) => Plus(Fix(Times(ox, Fix(y))), Fix(Times(oy, Fix(y))))
+  case Times((x, ox), (y, oy)) => Plus(Fix(Times(ox, Fix(y))), Fix(Times(oy, Fix(x))))
 }
 
-def eval(values: Map[String, Double]): Expr[Double] => Double = {
+def eval(values: Map[String, Double]) = cata[Expr, Double]{
   case Const(v) => v
   case Var(n) => values(n)
   case Exp(x) => Math.exp(x)
@@ -43,16 +50,29 @@ def eval(values: Map[String, Double]): Expr[Double] => Double = {
   case Times(x, y) => x * y
 }
 
-def graphviz_expr = para[Expr, String]{
-  case Const(v) => v.toString
-  case Var(name) => name
-  case Exp((x, _)) => s"exp($x)"
-  case Plus((x, _), (y, _)) => s"($x + $y)"
-  case Times((x, _), (y, _)) => s"($x * $y)"
+val const_like = raw"(\d+(?:\.\d+)?)".r
+val var_like = raw"([a-zA-Z]+(?:_[a-zA-Z]+)*)".r
+val exp_like = raw"exp\((.+)\)".r
+
+def parse = ana[Expr, String]{
+  case exp_like(e) => Exp(e)
+  case const_like(v) => Const(v.toDouble)
+  case var_like(name) => Var(name)
+  case balanced.unlift(bs) =>
+    val s = bs.drop(1).dropRight(1)
+    lazy val first_op = Seq("+", "*").map(s.indexOf).filter(_ > 0).min - 1
+    val (l, tail) = balanced(s).fold(s.splitAt(first_op))(h => (h, s.stripPrefix(h)))
+    val (op, r) = (tail(1), tail.drop(3))
+    if op == '+' then Plus(l, r) else Times(l, r)
 }
 
-extension (x: Object)
-  def strHash = java.lang.Integer.toString(x.hashCode, 36).replace("-", "m")
+def string = cata[Expr, String]{
+  case Const(v) => v.toString
+  case Var(name) => name
+  case Exp(x) => s"exp($x)"
+  case Plus(x, y) => s"($x + $y)"
+  case Times(x, y) => s"($x * $y)"
+}
 
 def id_alg: Expr[String] => String = {
   case Const(v) => "Const_" + v.toString.replace("-", "M").replace(".", "D")
@@ -75,19 +95,3 @@ def draw(ends: Boolean, step_1: Boolean) = pre_zygo[Expr, List[String], String](
       s"$id [label=\"Times\"${if step_1 && Math.max(xl.length, yl.length) == 1 then " color=red" else ""}]",
       s"$xid -> $id", s"$yid -> $id")
 })
-
-val const_like = raw"(\d*(?:\.\d+)?)".r
-val var_like = raw"([a-zA-Z]+(?:_[a-zA-Z]+)*)".r
-val bracketed = raw"\(?(.+?)\)?"
-val capture_binop = (op: String) => (bracketed + raw"\s*" + op + raw"\s*" + bracketed).r
-val exp_like = (raw"(?:exp|e\^)" + bracketed).r
-val plus_like = capture_binop(raw"\+")
-val times_like = capture_binop(raw"\*")
-
-def parse = ana[Expr, String]{
-  case plus_like(l, r) => Plus(l, r)
-  case times_like(l, r) => Times(l, r)
-  case exp_like(e) => Exp(e)
-  case const_like(v) => Const(v.toDouble)
-  case var_like(name) => Var(name)
-}
