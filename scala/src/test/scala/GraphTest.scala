@@ -80,7 +80,7 @@ class GraphTest extends AnyFunSuite:
     assert(pretty(path(Seq(1, 2, 3, 4, 5)), Seq()) == "((1 -> 2) + (2 -> 3) + (3 -> 4) + (4 -> 5))")
   }
 
-  test("tree pretty"){
+  test("tree pretty futu"){
     assert(pretty(tree(test_tree), Seq()) == "((root -> (A + B + C)) + (A -> (AA + AB + AC)) + (B -> (BA + BB)) + (BA -> BAA))")
   }
 

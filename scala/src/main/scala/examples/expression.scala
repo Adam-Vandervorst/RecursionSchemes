@@ -1,6 +1,6 @@
 package examples.expression
 
-import lib.*
+import lib.{*, given}
 
 import scala.annotation.tailrec
 
@@ -12,7 +12,7 @@ enum Expr[A]:
   case Times(x: A, y: A)
 import Expr.*
 
-given Functor[Expr] with
+given Traversable[Expr] with
   extension [A](e: Expr[A])
     def map[B](f: A => B): Expr[B] = e match
       case Const(v) => Const(v)
@@ -20,6 +20,13 @@ given Functor[Expr] with
       case Exp(x) => Exp(f(x))
       case Plus(x, y) => Plus(f(x), f(y))
       case Times(x, y) => Times(f(x), f(y))
+
+    def traverse[F[_], B](f: A => F[B])(using AF: Applicative[F]): F[Expr[B]] = e match
+      case Const(v) => AF.pure(Const(v))
+      case Var(n) => AF.pure(Var(n))
+      case Exp(x) => AF.pure(Exp[B].apply).app(f(x))
+      case Plus(x, y) => AF.pure(Plus[B].apply.curried).app(f(x)).app(f(y))
+      case Times(x, y) => AF.pure(Times[B].apply.curried).app(f(x)).app(f(y))
 
 def pretty = para[Expr, String]{
   case Const(v) => v.toString
@@ -54,16 +61,20 @@ val const_like = raw"(\d+(?:\.\d+)?)".r
 val var_like = raw"([a-zA-Z]+(?:_[a-zA-Z]+)*)".r
 val exp_like = raw"exp\((.+)\)".r
 
-def parse = ana[Expr, String]{
-  case exp_like(e) => Exp(e)
-  case const_like(v) => Const(v.toDouble)
-  case var_like(name) => Var(name)
+def maybe_parse = anaM[Expr, Option, String]{
+  case exp_like(e) => Some(Exp(e))
+  case const_like(v) => Some(Const(v.toDouble))
+  case var_like(name) => Some(Var(name))
   case balanced.unlift(bs) =>
     val s = bs.drop(1).dropRight(1)
-    lazy val first_op = Seq("+", "*").map(s.indexOf).filter(_ > 0).min - 1
-    val (l, tail) = balanced(s).fold(s.splitAt(first_op))(h => (h, s.stripPrefix(h)))
-    val (op, r) = (tail(1), tail.drop(3))
-    if op == '+' then Plus(l, r) else Times(l, r)
+    val op_positions = Seq("+", "*").map(s.indexOf).filter(_ > 0)
+    if op_positions.isEmpty then None
+    else
+      val first_op = op_positions.min - 1
+      val (l, tail) = balanced(s).fold(s.splitAt(first_op))(h => (h, s.stripPrefix(h)))
+      val (op, r) = (tail(1), tail.drop(3))
+      Some(if op == '+' then Plus(l, r) else Times(l, r))
+  case _ => None
 }
 
 def string = cata[Expr, String]{

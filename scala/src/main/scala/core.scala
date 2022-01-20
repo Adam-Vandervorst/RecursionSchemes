@@ -1,8 +1,51 @@
 package lib
 
 trait Functor[F[_]]:
-  extension [A](x: F[A])
+  extension [A](fa: F[A])
     def map[B](f: A => B): F[B]
+  def lift[A, B](f: A => B): F[A] => F[B] =
+    fa => fa.map(f)
+
+trait Applicative[F[_]] extends Functor[F]:
+  def pure[A](a: A): F[A]
+  extension [A](x: F[A])
+    def map[B](f: A => B): F[B] =
+      pure(f).app(x)
+  extension [A, B](fab: F[A => B])
+    def app(fa: F[A]): F[B]
+  override def lift[A, B](f: A => B): F[A] => F[B] =
+    fa => pure(f).app(fa)
+
+trait Traversable[T[_]] extends Functor[T]:
+  extension [A](ta: T[A])
+    def traverse[F[_] : Applicative, B](f: A => F[B]): F[T[B]]
+  extension [F[_] : Applicative, A](tfa: T[F[A]])
+    def sequence: F[T[A]] =
+      tfa.traverse(identity)
+
+trait Monad[M[_]] extends Applicative[M]:
+  def pure[A](a: A): M[A]
+  extension [A](x: M[M[A]])
+    def flatten: M[A] = x.flatMap(identity)
+  extension [A](x: M[A])
+    def flatMap[B](f: A => M[B]): M[B]
+    override def map[B](f: A => B) = x.flatMap(f.andThen(pure))
+  extension [A, B](fab: M[A => B])
+    def app(fa: M[A]): M[B] = fab.flatMap(fa.map)
+
+trait CoMonad[W[_]] extends Functor[W]:
+  extension [A](x: W[A])
+    def extract: A
+    def duplicate: W[W[A]] = x.extend(identity)
+    def extend[B](f: W[A] => B): W[B] =
+      duplicate.map(f)
+
+given monad_app [F[_] : Monad]: Applicative[F] = summon[Monad[F]]
+given trav_func [F[_] : Traversable]: Functor[F] = summon[Traversable[F]]
+given app_func [F[_] : Applicative]: Functor[F] = summon[Applicative[F]]
+given [F[_] : Functor, G[_] : Functor]: Functor[[X] =>> F[G[X]]] with
+  extension [A](fga: F[G[A]])
+    def map[B](m: A => B): F[G[B]] = summon[Functor[F]].map(fga)(_.map(m))
 
 final case class Fix[F[_]](unFix: F[Fix[F]])
 
