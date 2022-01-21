@@ -9,9 +9,16 @@ given Monad[Option] with
 given Traversable[Option] with
   extension [A](ta: Option[A])
     def map[B](f: A => B): Option[B] = ta.map(f)
-    def traverse[F[_] : Applicative, B](f: A => F[B]): F[Option[B]] = ta match
-      case Some(a) => summon[Applicative[F]].pure((b: B) => Some(b)).app(f(a))
-      case None => summon[Applicative[F]].pure(None)
+    def traverse[F[_], B](f: A => F[B])(using AF: Applicative[F]): F[Option[B]] = ta match
+      case Some(a) => AF.pure((b: B) => Some(b)).app(f(a))
+      case None => AF.pure(None)
+
+given Traversable[Seq] with
+  extension [A](ta: Seq[A])
+    def map[B](f: A => B): Seq[B] = ta.map(f)
+    def traverse[F[_], B](f: A => F[B])(using AF: Applicative[F]): F[Seq[B]] =
+      ta.foldRight(AF.pure(Seq[B]()))((x, ys) =>
+        f(x).map((a: B) => (b: Seq[B]) => b.prepended(a)).app(ys))
 
 given CoMonad[Box] with
   extension [A](x: Box[A])
