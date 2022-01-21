@@ -1,4 +1,4 @@
-package lib
+package be.adamv.recursionschemes
 
 given Monad[Option] with
   def pure[A](a: A): Option[A] = Some(a)

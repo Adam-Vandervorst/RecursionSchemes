@@ -1,6 +1,6 @@
 package examples.algebraic_graph
 
-import lib.*
+import be.adamv.recursionschemes.*
 
 enum Graph[+V, +A]:
   case Empty extends Graph[Nothing, Nothing]

@@ -1,6 +1,6 @@
 package examples.expression
 
-import lib.{*, given}
+import be.adamv.recursionschemes.{*, given}
 
 import scala.annotation.tailrec
 

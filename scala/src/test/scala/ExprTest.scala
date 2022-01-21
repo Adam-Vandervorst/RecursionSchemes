@@ -1,5 +1,5 @@
 import examples.expression.{*, given}
-import lib.{*, given}
+import be.adamv.recursionschemes.{*, given}
 import org.scalatest.funsuite.AnyFunSuite
 
 class ExprTest extends AnyFunSuite:

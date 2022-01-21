@@ -1,4 +1,4 @@
-package lib
+package be.adamv.recursionschemes
 
 extension [K, V](m1: Map[K, V])
   def mergeWith(m2: Map[K, V])(dedup: (V, V) => V): Map[K, V] =

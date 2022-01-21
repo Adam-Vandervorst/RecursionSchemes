@@ -1,4 +1,4 @@
-package lib
+package be.adamv.recursionschemes
 
 trait Functor[F[_]]:
   extension [A](fa: F[A])

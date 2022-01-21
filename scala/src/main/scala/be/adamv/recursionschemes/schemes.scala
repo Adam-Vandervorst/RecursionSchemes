@@ -1,4 +1,4 @@
-package lib
+package be.adamv.recursionschemes
 
 // Folds
 def cata[F[_] : Functor, A](alg: F[A] => A)(fix: Fix[F]): A =
