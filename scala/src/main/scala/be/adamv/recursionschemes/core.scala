@@ -3,18 +3,21 @@ package be.adamv.recursionschemes
 trait Functor[F[_]]:
   extension [A](fa: F[A])
     def map[B](f: A => B): F[B]
-  def lift[A, B](f: A => B): F[A] => F[B] =
-    fa => fa.map(f)
+  extension [A, B](f: A => B)
+    def lift: F[A] => F[B] =
+      fa => fa.map(f)
 
 trait Applicative[F[_]] extends Functor[F]:
-  def pure[A](a: A): F[A]
+  extension [A](a: A)
+    def pure: F[A]
   extension [A](x: F[A])
     def map[B](f: A => B): F[B] =
       pure(f).app(x)
   extension [A, B](fab: F[A => B])
-    def app(fa: F[A]): F[B]
-  override def lift[A, B](f: A => B): F[A] => F[B] =
-    fa => pure(f).app(fa)
+    infix def app(fa: F[A]): F[B]
+  extension [A, B](f: A => B)
+    override def lift: F[A] => F[B] =
+      fa => pure(f).app(fa)
 
 trait Traversable[T[_]] extends Functor[T]:
   extension [A](ta: T[A])
@@ -24,7 +27,8 @@ trait Traversable[T[_]] extends Functor[T]:
       tfa.traverse(identity)
 
 trait Monad[M[_]] extends Applicative[M]:
-  def pure[A](a: A): M[A]
+  extension [A](a: A)
+    def pure: M[A]
   extension [A](x: M[M[A]])
     def flatten: M[A] = x.flatMap(identity)
   extension [A](x: M[A])

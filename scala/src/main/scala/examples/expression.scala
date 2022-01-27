@@ -21,12 +21,12 @@ given Traversable[Expr] with
       case Plus(x, y) => Plus(f(x), f(y))
       case Times(x, y) => Times(f(x), f(y))
 
-    def traverse[F[_], B](f: A => F[B])(using AF: Applicative[F]): F[Expr[B]] = e match
-      case Const(v) => AF.pure(Const(v))
-      case Var(n) => AF.pure(Var(n))
-      case Exp(x) => AF.pure(Exp[B].apply).app(f(x))
-      case Plus(x, y) => AF.pure(Plus[B].apply.curried).app(f(x)).app(f(y))
-      case Times(x, y) => AF.pure(Times[B].apply.curried).app(f(x)).app(f(y))
+    def traverse[F[_] : Applicative, B](f: A => F[B]): F[Expr[B]] = e match
+      case Const(v) => Const(v).pure
+      case Var(n) => Var(n).pure
+      case Exp(x) => Exp[B].apply.pure app f(x)
+      case Plus(x, y) => Plus[B].apply.curried.pure app f(x) app f(y)
+      case Times(x, y) => Times[B].apply.curried.pure app f(x) app f(y)
 
 def pretty = para[Expr, String]{
   case Const(v) => v.toString

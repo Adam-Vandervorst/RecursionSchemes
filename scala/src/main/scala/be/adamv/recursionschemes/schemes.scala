@@ -74,8 +74,8 @@ def anaDistM[F[_] : Functor, M[_] : Monad, A](dm: [X] => F[M[X]] => M[F[X]])(coa
   coalg(seed).flatMap(fa => dm(fa.map(a => anaDistM[F, M, A](dm)(coalg)(a))).map(Fix(_)))
 
 def gana[F[_] : Functor, M[_] : Monad, A](dm: [X] => M[F[X]] => F[M[X]])(coalg: A => F[M[A]])(seed: A): Fix[F] =
-  def run(mfma: M[F[M[A]]]): Fix[F] = Fix(dm(mfma).map(fmma => run(summon[Monad[M]].lift(coalg)(fmma.flatten))))
-  run(summon[Monad[M]].pure(coalg(seed)))
+  def run(mfma: M[F[M[A]]]): Fix[F] = Fix(dm(mfma).map(fmma => run(coalg.lift(fmma.flatten))))
+  run(coalg(seed).pure)
 
 def ichno[F[_] : Functor, A](coalg: (A, Seq[F[A]]) => F[A])(seed: A, trace: Seq[F[A]] = Seq()): Fix[F] =
   val fa = coalg(seed, trace)
