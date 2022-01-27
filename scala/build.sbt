@@ -1,5 +1,5 @@
 ThisBuild / organization := "be.adamv"
-ThisBuild / version := "0.2.1"
+ThisBuild / version := "0.2.2"
 ThisBuild / scalaVersion := "3.1.2-RC1-bin-20220118-9e14f5f-NIGHTLY"
 
 lazy val root = (project in file("."))
