@@ -14,13 +14,19 @@ given Traversable[Option] with
       case Some(a) => Some[B].pure app f(a)
       case None => None.pure
 
+given Monad[Seq] with
+  extension [A](a: A)
+    def pure: Seq[A] = Seq(a)
+  extension [A](ma: Seq[A])
+    override def map[B](f: A => B): Seq[B] = ma.map(f)
+    def flatMap[B](f: A => Seq[B]): Seq[B] = ma.flatMap(f)
+
 given Traversable[Seq] with
   extension [A](ta: Seq[A])
     def map[B](f: A => B): Seq[B] = ta.map(f)
     def traverse[F[_] : Applicative, B](f: A => F[B]): F[Seq[B]] =
-      ta.foldRight(Seq[B]().pure) { (x, ys) =>
-        f(x).map((a: B) => (b: Seq[B]) => b.prepended(a)) app ys
-      }
+      ta.foldRight[F[Seq[B]]](Nil.pure)((x, ys) => 
+        f(x).map((a: B) => (b: Seq[B]) => a +: b) app ys)
 
 given CoMonad[Box] with
   extension [A](x: Box[A])

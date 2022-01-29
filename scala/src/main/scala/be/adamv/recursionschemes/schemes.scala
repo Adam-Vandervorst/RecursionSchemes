@@ -77,6 +77,12 @@ def gana[F[_] : Functor, M[_] : Monad, A](dm: [X] => M[F[X]] => F[M[X]])(coalg: 
   def run(mfma: M[F[M[A]]]): Fix[F] = Fix(dm(mfma).map(fmma => run(coalg.lift(fmma.flatten))))
   run(coalg(seed).pure)
 
+def apo[F[_] : Functor, A](coalg: A => F[Either[A, Fix[F]]])(seed: A): Fix[F] =
+  Fix(coalg(seed).map(_.fold(apo(coalg), identity)))
+
+def weak_apo[F[_] : Functor, A](coalg: A => Either[F[A], Fix[F]])(seed: A): Fix[F] =
+  coalg(seed).fold(fa => Fix(fa.map(weak_apo(coalg))), identity)
+
 def ichno[F[_] : Functor, A](coalg: (A, Seq[F[A]]) => F[A])(seed: A, trace: Seq[F[A]] = Seq()): Fix[F] =
   val fa = coalg(seed, trace)
   Fix(fa.map(ff => ichno(coalg)(ff, fa +: trace)))
