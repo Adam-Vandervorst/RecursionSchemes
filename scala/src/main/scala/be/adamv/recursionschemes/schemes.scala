@@ -57,6 +57,9 @@ def pre_zygo[F[_] : Functor, A, B](helper: F[B] => B, alg: (F[(A, B)], B) => A)(
   val b = helper(r.map(_._2))
   (alg(r, b), b)
 
+def prepro[F[_] : Functor, G[_] : Functor, A](n: [X] => F[X] => G[X])(alg: G[A] => A)(fix: Fix[F]): A =
+  alg(n(fix.unFix.map(prepro[F, G, A](n)(alg))))
+
 // Unfolds
 def ana[F[_] : Functor, A](coalg: A => F[A])(seed: A): Fix[F] =
   Fix(coalg(seed).map(ana(coalg)))
@@ -74,7 +77,7 @@ def anaDistM[F[_] : Functor, M[_] : Monad, A](dm: [X] => F[M[X]] => M[F[X]])(coa
   coalg(seed).flatMap(fa => dm(fa.map(a => anaDistM[F, M, A](dm)(coalg)(a))).map(Fix(_)))
 
 def gana[F[_] : Functor, M[_] : Monad, A](dm: [X] => M[F[X]] => F[M[X]])(coalg: A => F[M[A]])(seed: A): Fix[F] =
-  def run(mfma: M[F[M[A]]]): Fix[F] = Fix(dm(mfma).map(fmma => run(coalg.lift(fmma.flatten))))
+  def run(mfma: M[F[M[A]]]): Fix[F] = Fix(dm(mfma).map(mma => run(coalg.lift(mma.flatten))))
   run(coalg(seed).pure)
 
 def apo[F[_] : Functor, A](coalg: A => F[Either[A, Fix[F]]])(seed: A): Fix[F] =
@@ -100,3 +103,6 @@ def dist_futu[F[_] : Functor]: [X] => Free[F, F[X]] => F[Free[F, X]] =
 
 def _futu_gana[F[_] : Functor, A](coalg: A => F[Free[F, A]])(a: A): Fix[F] =
   gana[F, [X] =>> Free[F, X], A](dist_futu[F])(coalg)(a)
+
+def postpro[F[_] : Functor, G[_] : Functor, A](n: [X] => F[X] => G[X])(coalg: A => F[A])(a: A): Fix[G] =
+  Fix(n(coalg(a)).map(postpro[F, G, A](n)(coalg)))
