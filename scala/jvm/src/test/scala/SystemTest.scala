@@ -9,24 +9,24 @@ class SystemTest extends AnyFunSuite:
   val di2 = Dir[Int]("even_under_10", Seq(2, 4, 6, 8))
   val ds1 = Dir[String]("numbers_1_2", Seq("1", "2"))
 
-  val ff1 = Fix(File("foo", "txt", "42"))
-  val ff2 = Fix(File("bar", "txt", "something"))
-  val ff3 = Fix(File("baz", "txt", "else"))
-  val ff4 = Fix(File("qux", "csv", "1,2;3,4"))
-  val ff5 = Fix(File("qux", "bin", "1,2;3,4".strHash))
+  val ff1: Fix[System] = Fix(File("foo", "txt", "42"))
+  val ff2: Fix[System] = Fix(File("bar", "txt", "something"))
+  val ff3: Fix[System] = Fix(File("baz", "txt", "else"))
+  val ff4: Fix[System] = Fix(File("qux", "csv", "1,2;3,4"))
+  val ff5: Fix[System] = Fix(File("qux", "bin", "1,2;3,4".strHash))
 
-  val fd1 = Fix(Dir("nothing", Seq()))
-  val fd2 = Fix(Dir("fb", Seq(ff1, ff2)))
-  val fd3 = Fix(Dir("mixed", Seq(fd1, fd2, ff3)))
-  val fd4 = Fix(Dir("other", Seq(ff4, ff5)))
-  val fd5 = Fix(Dir("both", Seq(fd3, fd4)))
+  val fd1: Fix[System] = Fix(Dir("nothing", Seq()))
+  val fd2: Fix[System] = Fix(Dir("fb", Seq(ff1, ff2)))
+  val fd3: Fix[System] = Fix(Dir("mixed", Seq(fd1, fd2, ff3)))
+  val fd4: Fix[System] = Fix(Dir("other", Seq(ff4, ff5)))
+  val fd5: Fix[System] = Fix(Dir("both", Seq(fd3, fd4)))
 
-  val fl1 = Fix(Link(retrieve_path("root/both/other/cux.csv")))
-  val fl2 = Fix(Link(retrieve_path("root/both/mixed/nothing")))
-  val fl3 = Fix(Link(retrieve_path("root/refs")))
-
-  val fd6 = Fix(Dir("refs", Seq(fl1, fl2, fl3)))
-  val fd7 = Fix(Dir("root", Seq(fd5, fd6)))
+//  val fl1: Fix[System] = Fix(Link(x => retrieve_path(using x)("root/both/other/cux.csv").get))
+//  val fl2: Fix[System] = Fix(Link(retrieve_path("root/both/mixed/nothing")))
+//  val fl3: Fix[System] = Fix(Link(retrieve_path("root/refs")))
+//
+//  val fd6: Fix[System] = Fix(Dir("refs", Seq(fl1, fl2, fl3)))
+//  val fd7: Fix[System] = Fix(Dir("root", Seq(fd5, fd6)))
 
 
   test("functor map"){
@@ -76,9 +76,8 @@ class SystemTest extends AnyFunSuite:
   test("retrieve depth_n"){
     given Fix[System] = fd3
 
-//    println(retrieve_path("mixed/fb/foo.txt", fd3))
-//    println(retrieve_path("mixed/nothing", fd3))
-
-//    println(retrieve_path("mixed/baz.txt", fd3))
+    assert(retrieve_path("mixed/fb/foo.txt").contains(ff1))
+    assert(retrieve_path("mixed/nothing").contains(fd1))
+    assert(retrieve_path("nonexistent/baz.txt").isEmpty)
   }
 
