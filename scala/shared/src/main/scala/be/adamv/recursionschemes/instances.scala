@@ -1,5 +1,11 @@
 package be.adamv.recursionschemes
 
+
+given [A]: Monoid[List[A]] with
+  override def zero: List[A] = Nil
+  extension (x: List[A]) 
+    override infix def add(y: List[A]): List[A] = x ++ y
+
 given Monad[Option] with
   extension [A](a: A)
     def pure: Option[A] = Some(a)

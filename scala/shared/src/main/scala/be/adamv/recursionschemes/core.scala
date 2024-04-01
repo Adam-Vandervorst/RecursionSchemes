@@ -1,5 +1,11 @@
 package be.adamv.recursionschemes
 
+
+trait Monoid[A]:
+  def zero: A
+  extension (x: A) 
+    infix def add(y: A): A
+
 trait Functor[F[_]]:
   extension [A](fa: F[A])
     def map[B](f: A => B): F[B]
@@ -50,6 +56,10 @@ given app_func [F[_] : Applicative]: Functor[F] = summon[Applicative[F]]
 given [F[_] : Functor, G[_] : Functor]: Functor[[X] =>> F[G[X]]] with
   extension [A](fga: F[G[A]])
     def map[B](m: A => B): F[G[B]] = summon[Functor[F]].map(fga)(_.map(m))
+given const_monoid_app [O : Monoid]: Applicative[[X] =>> O] with
+  extension [A](a: A) def pure: O = summon[Monoid[O]].zero
+  extension [A, B](fab: O) 
+    infix def app(fa: O): O = fab add fa
 
 final case class Fix[F[_]](unFix: F[Fix[F]])
 
